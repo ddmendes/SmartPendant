@@ -1,0 +1,9 @@
+MessageContext	KEYWORD1
+setPayload	KEYWORD2
+GetPayload	KEYWORD2
+PayloadStrategy	KEYWORD1
+getPayloadType	KEYWORD2
+getPayloadData	KEYWORD2
+EventPayloadStrategy	KEYWORD1
+MessageFactory	KEYWORD1
+getEventMessage	KEYWORD2
