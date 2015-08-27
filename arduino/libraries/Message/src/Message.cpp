@@ -25,8 +25,7 @@ int copyUpTo(char* target, char* source, size_t limit,
   return i;
 }
 
-MessageContext::MessageContext(PayloadStrategy* payload) :
-  mPayload(payload) {}
+MessageContext::MessageContext(PayloadStrategy* payload) : mPayload(payload) {}
 
 int MessageContext::getMessage(char* msgBuffer, int bufferSize) {
   int nextPosition = 0;
@@ -61,6 +60,6 @@ int EventPayloadStrategy::getPayloadData(char* buffer, int bufferSize) {
 MessageContext& MessageFactory::getEventMessage(char* type, char* source, 
                                                        char* state) {
   EventPayloadStrategy payload(type, source, state);
-  MessageContext message(&payload);
+  MessageContext message(payload);
   return message;
 }

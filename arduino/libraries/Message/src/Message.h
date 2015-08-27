@@ -34,7 +34,7 @@ public:
 
 class MessageContext {
 private:
-  PayloadStrategy* mPayload;
+  PayloadStrategy& mPayload;
 public:
   /**
    * @brief Full constructor.
@@ -43,7 +43,7 @@ public:
    * 
    * @param payload The message payload.
    */
-  MessageContext(PayloadStrategy* payload);
+  MessageContext(PayloadStrategy& payload);
 
   /**
    * @brief Gets the represented message.
