@@ -1,74 +1,142 @@
-#include <Message.h>
-#include <util/atomic.h>
+#define BUTTON_INPUT A0
+#define RED_PIN   5
+#define GREEN_PIN 6
+#define BLUE_PIN  9
 
-#define LAST_BTN_STATE_MASK 0b10101010
-#define BTN_LFT_TOP_BIT 0b01000000
-#define BTN_LFT_BOT_BIT 0b00010000
-#define BTN_RGT_TOP_BIT 0b00000100
-#define BTN_RGT_BOT_BIT 0b00000001
-#define BTN_LFT_TOP_MASK 0b11000000
-#define BTN_LFT_BOT_MASK 0b00110000
-#define BTN_RGT_TOP_MASK 0b00001100
-#define BTN_RGT_BOT_MASK 0b00000011
-#define BTN_LFT_TOP_PIN 3
-#define BTN_LFT_BOT_PIN 4
-#define BTN_RGT_TOP_PIN 7
-#define BTN_RGT_BOT_PIN 8
-#define BTN_PANIC 2
+enum Button {
+  NO_BUTTON,
+  LEFT_TOP,
+  LEFT_MIDDLE,
+  LEFT_BOTTOM,
+  RIGHT_TOP,
+  RIGHT_MIDDLE,
+  RIGHT_BOTTOM
+} btn = NO_BUTTON;
 
-void buttonPressed();
-void panicButton();
-
-int button;
-char payload[1000];
-struct ButtonEvent {
-  char* type = "button";
-  char* source;
-  char* state = "click";
-};
+void checkButtons();
 
 void setup() {
-  pinMode(BTN_LFT_TOP_PIN, INPUT_PULLUP);
-  pinMode(BTN_LFT_BOT_PIN, INPUT_PULLUP);
-  pinMode(BTN_RGT_TOP_PIN, INPUT_PULLUP);
-  pinMode(BTN_RGT_BOT_PIN, INPUT_PULLUP);
-  pinMode(13, OUTPUT);
-  // attachInterrupt(0, buttonPressed, FALLING);
-  // attachInterrupt(1, panicButton, FALLING);
   Serial.begin(9600);
-  Serial.println("oi");
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
 }
 
 void loop() {
-  button <<= 1;
-  button &= LAST_BTN_STATE_MASK;
-  button |= digitalRead(BTN_LFT_TOP_PIN) == LOW ? BTN_LFT_TOP_BIT : 0;
-  button |= digitalRead(BTN_LFT_BOT_PIN) == LOW ? BTN_LFT_BOT_BIT : 0;
-  button |= digitalRead(BTN_RGT_TOP_PIN) == LOW ? BTN_RGT_TOP_BIT : 0;
-  button |= digitalRead(BTN_RGT_BOT_PIN) == LOW ? BTN_RGT_BOT_BIT : 0;
+  float r;
+  float g;
+  float b;
+  long start;
 
-  if(button > 0) {
-    struct ButtonEvent event;
-    switch (button) {
-        case 0b1000:
-          event.source = "leftTopButton";
-          Serial.println("leftTopButton");
+  static Button lastButton = NO_BUTTON;
+  checkButtons();
+
+  if(btn != NO_BUTTON && lastButton == NO_BUTTON) {
+    switch (btn) {
+        case LEFT_TOP:
+          Serial.println("btnLeftTop");
+          for(int i = 0; i < 256; i++) {
+            analogWrite(RED_PIN, i);
+            delay(10);
+          }
+          for(int i = 255; i > -1; i--) {
+            analogWrite(RED_PIN, i);
+            delay(10);
+          }
           break;
-        case 0b0100:
-          event.source = "leftBottomButton";
-          Serial.println("leftBottomButton");
+        case LEFT_MIDDLE:
+          Serial.println("btnLeftMiddle");
+          for(int i = 0; i < 256; i++) {
+            analogWrite(GREEN_PIN, i);
+            delay(10);
+          }
+          for(int i = 255; i > -1; i--) {
+            analogWrite(GREEN_PIN, i);
+            delay(10);
+          }
           break;
-        case 0b0010:
-          event.source = "rightTopButton";
-          Serial.println("rightTopButton");
+        case LEFT_BOTTOM:
+          Serial.println("btnLeftBottom");
+          for(int i = 0; i < 256; i++) {
+            analogWrite(BLUE_PIN, i);
+            delay(10);
+          }
+          for(int i = 255; i > -1; i--) {
+            analogWrite(BLUE_PIN, i);
+            delay(10);
+          }
           break;
-        case 0b0001:
-          event.source = "rightBottonButton";
-          Serial.println("rightBottonButton");
+        case RIGHT_TOP:
+          Serial.println("btnRightTop");
+          analogWrite(RED_PIN, 255);
+          delay(500);
+          analogWrite(GREEN_PIN, 255);
+          delay(500);
+          analogWrite(RED_PIN, 0);
+          delay(500);
+          analogWrite(BLUE_PIN, 255);
+          delay(500);
+          analogWrite(GREEN_PIN, 0);
+          delay(500);
+          analogWrite(BLUE_PIN, 0);
           break;
-        default:
-          Serial.println(button);
+        case RIGHT_MIDDLE:
+          Serial.println("btnRightMiddle");
+          r = 0;
+          g = 3.1415 * 15 / 180;
+          b = 3.1415 * 30 / 180;
+          start = millis();
+          while(millis() - start < 5000) {
+            analogWrite(RED_PIN, 255 * 0.5 * (sin(r) + 1));
+            analogWrite(GREEN_PIN, 255 * 0.5 * (sin(g) + 1));
+            analogWrite(BLUE_PIN, 255 * 0.5 * (sin(b) + 1));
+            delay(10);
+            r += 0.1;
+            g += 0.1;
+            b += 0.1;
+          }
+          break;
+        case RIGHT_BOTTOM:
+          Serial.println("btnRightBottom");
+          r = 0;
+          g = 3.1415 * 30 / 180;
+          b = 3.1415 * 60 / 180;
+          start = millis();
+          while(millis() - start < 5000) {
+            analogWrite(RED_PIN, 255 * 0.5 * (sin(r) + 1));
+            analogWrite(GREEN_PIN, 255 * 0.5 * (sin(g) + 1));
+            analogWrite(BLUE_PIN, 255 * 0.5 * (sin(b) + 1));
+            delay(10);
+            r += 0.1;
+            g += 0.1;
+            b += 0.1;
+          }
           break;
     }
+    analogWrite(RED_PIN, 0);
+    analogWrite(GREEN_PIN, 0);
+    analogWrite(BLUE_PIN, 0);
+  }
+
+  lastButton = btn;
+}
+
+void checkButtons() {
+  register int bPin = analogRead(BUTTON_INPUT);
+
+  if(937 < bPin) {
+    btn = NO_BUTTON;
+  } else if (835 < bPin && bPin <= 937) {
+    btn = RIGHT_BOTTOM;
+  } else if (793 < bPin && bPin <= 835) {
+    btn = RIGHT_MIDDLE;
+  } else if (725 < bPin && bPin <= 793) {
+    btn = RIGHT_TOP;
+  } else if (600 < bPin && bPin <= 725) {
+    btn = LEFT_BOTTOM;
+  } else if (282 < bPin && bPin <= 600) {
+    btn = LEFT_MIDDLE;
+  } else if (bPin < 282) {
+    btn = LEFT_TOP;
   }
 }

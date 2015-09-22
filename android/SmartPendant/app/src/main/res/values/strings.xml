@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SmartPendant</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="accessiblity_description">This service intends to interface the smartphone using the smartpendant accessory.</string>
+</resources>
