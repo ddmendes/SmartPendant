@@ -1,5 +1,6 @@
 package ddioriomendes.smartpendant;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -13,6 +14,9 @@ import android.view.MenuItem;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
+    private static final int REQUEST_ENABLE_BT = 1;
+
+    private BluetoothAdapter mBluetoothAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +26,32 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, AccessoryDaemon.class);
         startService(intent);
         Log.d(TAG, "onCreate");
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(!mBluetoothAdapter.isEnabled()) {
+            Log.d(TAG, "Bluetooth is not enabled.");
+            Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBluetooth, REQUEST_ENABLE_BT);
+        } else {
+            Log.d(TAG, "Bluetooth already enabled.");
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == REQUEST_ENABLE_BT) {
+            if(resultCode == RESULT_OK) {
+                Log.d("onActivityResult", "Bluetooth enabled.");
+            } else {
+                Log.d("onActivityResult", "User refused to turn bluetooth on.");
+            }
+        }
     }
 
     @Override
