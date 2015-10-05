@@ -1,6 +1,8 @@
 package ddioriomendes.smartpendant;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -10,13 +12,18 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
-    private static final int REQUEST_ENABLE_BT = 1;
-
-    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothSerial bluetooth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,31 +34,72 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
         Log.d(TAG, "onCreate");
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetooth = new BluetoothSerial(this, new BluetoothSerial.BluetoothSerialListener() {
+            private static final String TAG = "BluetoothSerialListener";
+
+            @Override
+            public void onDeviceFound(BluetoothDevice device, int status) {
+                if(status == BluetoothSerial.STATUS_DEVICE_FOUND) {
+                    Log.d(TAG, "Device found: " +
+                               device.getName() +
+                               "(" + device.getAddress() + ")");
+                    bluetooth.connect(device);
+                } else {
+                    Log.e(TAG, "Requested device not found.");
+                }
+            }
+
+            @Override
+            public void onDeviceConnected(int status) {
+                Log.d("onDeviceConnected", "" + status);
+                if(status == BluetoothSerial.STATUS_DEVICE_CONNECTED) {
+                    Log.d(TAG, "Device connected.");
+                } else if(status == BluetoothSerial.STATUS_CANNOT_OPEN_SOCKET) {
+                    Log.e(TAG, "Cannot open socket.");
+                } else if(status == BluetoothSerial.STATUS_CANNOT_CONNECT) {
+                    Log.e(TAG, "Cannot connect to device.");
+                } else if(status == BluetoothSerial.STATUS_CANNOT_GET_STREAM) {
+                    Log.e(TAG, "Cannot get input/output stream");
+                }
+            }
+
+            @Override
+            public void onMessageReceived(String message) {
+
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if(!mBluetoothAdapter.isEnabled()) {
-            Log.d(TAG, "Bluetooth is not enabled.");
-            Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBluetooth, REQUEST_ENABLE_BT);
-        } else {
-            Log.d(TAG, "Bluetooth already enabled.");
-        }
+        bluetooth.findBondedDevice("HC-05");
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == REQUEST_ENABLE_BT) {
-            if(resultCode == RESULT_OK) {
-                Log.d("onActivityResult", "Bluetooth enabled.");
-            } else {
-                Log.d("onActivityResult", "User refused to turn bluetooth on.");
-            }
+
+    }
+
+    public void btnClick(View view) {
+        switch (view.getId()) {
+            case R.id.btnRed:
+                bluetooth.write("r");
+                break;
+            case R.id.btnGreen:
+                bluetooth.write("g");
+                break;
+            case R.id.btnBlue:
+                bluetooth.write("b");
+                break;
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
     }
 
     @Override

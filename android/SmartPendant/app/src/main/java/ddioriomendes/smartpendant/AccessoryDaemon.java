@@ -38,7 +38,7 @@ public class AccessoryDaemon extends AccessibilityService {
         registerReceiver(new ScreenListener(), intentFilter);
 
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-        telephonyManager.listen(new PhoneListener(), PhoneStateListener.LISTEN_CALL_STATE);
+        telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
 
         return START_STICKY;
     }
