@@ -125,7 +125,7 @@ public class BluetoothSerial {
             }
 
             String uuid = mContext.getResources().getString(R.string.bt_serial_uuid);
-            BluetoothSocket bSocket = null;
+            BluetoothSocket bSocket;
 
             try {
                 bSocket = params[0].createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
@@ -156,17 +156,15 @@ public class BluetoothSerial {
             if(bluetoothSocket != null) {
                 mBluetoothSocket = bluetoothSocket;
 
-                InputStream tmpInput = null;
-                OutputStream tmpOutput = null;
+                InputStream tmpInput;
+                OutputStream tmpOutput;
                 try {
                     tmpInput = mBluetoothSocket.getInputStream();
                     tmpOutput = mBluetoothSocket.getOutputStream();
                 } catch (IOException e) {
                     listener.onDeviceConnected(STATUS_CANNOT_GET_STREAM);
                     try {
-                        mBluetoothSocket.close();
-                        tmpInput.close();
-                        tmpOutput.close();
+                        close();
                     } catch (IOException e1) {}
                     state = STATE_IDLE;
                     return;
@@ -176,6 +174,7 @@ public class BluetoothSerial {
                 outputStream = new BufferedOutputStream(tmpOutput);
 
                 state = STATE_CONNECTED;
+                connectionListener.start();
                 listener.onDeviceConnected(STATUS_DEVICE_CONNECTED);
             }
         }
@@ -188,8 +187,10 @@ public class BluetoothSerial {
         public void run() {
             // TODO listen for incoming message
             try {
-                inputStream.read(buffer);
-                Log.d("connectionListener", new String(buffer));
+                while(state == STATE_CONNECTED) {
+                    inputStream.read(buffer);
+                    Log.d("connectionListener", new String(buffer));
+                }
             } catch (IOException e) {
                 connectionLost();
             }
@@ -209,10 +210,10 @@ public class BluetoothSerial {
 
     public interface BluetoothSerialListener {
 
-        public void onDeviceFound(BluetoothDevice device, int status);
-        public void onDeviceConnected(int status);
-        public void onMessageReceived(String message);
-        public void onConnectionLost();
+        void onDeviceFound(BluetoothDevice device, int status);
+        void onDeviceConnected(int status);
+        void onMessageReceived(String message);
+        void onConnectionLost();
 
     }
 }
