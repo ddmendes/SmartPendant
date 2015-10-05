@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created by ddiorio on 30-Sep-15.
@@ -80,12 +79,15 @@ public class BluetoothSerial {
         }
     }
 
-    public void close() {
-        try {
-            mBluetoothSocket.close();
-            inputStream.close();
-            outputStream.close();
-        } catch (IOException e) {}
+    public void close() throws IOException {
+        mBluetoothSocket.close();
+        mBluetoothSocket = null;
+
+        inputStream.close();
+        inputStream = null;
+
+        outputStream.close();
+        outputStream = null;
     }
 
     private final AsyncTask<String, Void, BluetoothDevice> asyncFindBondedDevice = new AsyncTask<String, Void, BluetoothDevice>() {
@@ -180,17 +182,37 @@ public class BluetoothSerial {
     };
 
     Thread connectionListener = new Thread() {
+        byte[] buffer = new byte[1024];
+
         @Override
         public void run() {
             // TODO listen for incoming message
+            try {
+                inputStream.read(buffer);
+                Log.d("connectionListener", new String(buffer));
+            } catch (IOException e) {
+                connectionLost();
+            }
         }
     };
+
+    private void connectionLost() {
+        Log.e(TAG, "Bluetooth connection lost.");
+        state = STATE_IDLE;
+        try {
+            close();
+        } catch (IOException e) {
+            Log.e(TAG, "While closing stream and socket due to lost connection: " + e.getMessage());
+        }
+        listener.onConnectionLost();
+    }
 
     public interface BluetoothSerialListener {
 
         public void onDeviceFound(BluetoothDevice device, int status);
         public void onDeviceConnected(int status);
         public void onMessageReceived(String message);
+        public void onConnectionLost();
 
     }
 }

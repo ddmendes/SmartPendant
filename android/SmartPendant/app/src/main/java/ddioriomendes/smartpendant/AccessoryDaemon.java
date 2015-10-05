@@ -2,22 +2,27 @@ package ddioriomendes.smartpendant;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.app.Service;
+import android.app.NotificationManager;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.IBinder;
-import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 public class AccessoryDaemon extends AccessibilityService {
-
     public static final String TAG = "AccessoryDaemon";
+    private static final String ACCESSORY_NAME_PREFIX = "HC-05";
+
+    private static final int NOTIFICATION_CONNECTED_ID       = 0x01;
+    private static final int NOTIFICATION_CONNECTION_LOST_ID = 0x02;
+
     private AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+    private BluetoothSerial mBluetoothSerial;
 
     @Override
     protected void onServiceConnected() {
@@ -39,6 +44,10 @@ public class AccessoryDaemon extends AccessibilityService {
 
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
         telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
+
+        mBluetoothSerial = new BluetoothSerial(this, btListener);
+        // TODO finds accessory asyncronously and repeat until connect.
+        mBluetoothSerial.findBondedDevice(ACCESSORY_NAME_PREFIX);
 
         return START_STICKY;
     }
@@ -72,4 +81,47 @@ public class AccessoryDaemon extends AccessibilityService {
             }
         }
     }
+
+    private BluetoothSerial.BluetoothSerialListener btListener = new BluetoothSerial.BluetoothSerialListener() {
+        @Override
+        public void onDeviceFound(BluetoothDevice device, int status) {
+            if(status == BluetoothSerial.STATUS_DEVICE_FOUND) {
+                mBluetoothSerial.connect(device);
+            }
+        }
+
+        @Override
+        public void onDeviceConnected(int status) {
+            if(status == BluetoothSerial.STATUS_DEVICE_CONNECTED) {
+                notifyPendantConnected();
+            }
+        }
+
+        private void notifyPendantConnected() {
+            NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(AccessoryDaemon.this)
+                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                    .setContentTitle(getString(R.string.notification_connected_title))
+                    .setContentText(getString(R.string.notification_connected_text))
+                    .setOngoing(true);
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            mNotificationManager.notify(NOTIFICATION_CONNECTED_ID, mNotificationBuilder.build());
+        }
+
+        @Override
+        public void onMessageReceived(String message) {
+
+        }
+
+        @Override
+        public void onConnectionLost() {
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            mNotificationManager.cancel(NOTIFICATION_CONNECTED_ID);
+
+            NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(AccessoryDaemon.this)
+                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                    .setContentTitle(getString(R.string.notification_connection_lost_title))
+                    .setContentText(getString(R.string.notification_connection_lost_text));
+            mNotificationManager.notify(NOTIFICATION_CONNECTION_LOST_ID, mNotificationBuilder.build());
+        }
+    };
 }

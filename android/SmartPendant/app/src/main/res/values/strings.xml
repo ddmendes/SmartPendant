@@ -6,4 +6,9 @@
     <string name="action_settings">Settings</string>
 
     <string name="accessiblity_description">This service intends to interface the smartphone using the smartpendant accessory.</string>
+
+    <string name="notification_connected_title">SmartPendant Connect</string>
+    <string name="notification_connected_text">Touch to set your smartpendant configurations.</string>
+    <string name="notification_connection_lost_title">Connection Lost</string>
+    <string name="notification_connection_lost_text">You are no more connected to your smartpendant.</string>
 </resources>
