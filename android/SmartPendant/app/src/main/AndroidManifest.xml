@@ -29,6 +29,7 @@
             </intent-filter>
         </service>
 
+        <!--
         <receiver
             android:name=".BootListener"
             android:enabled="true"
@@ -37,6 +38,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        -->
     </application>
 
 </manifest>

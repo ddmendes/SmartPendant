@@ -21,20 +21,32 @@ public class AccessoryDaemon extends AccessibilityService {
     private static final int NOTIFICATION_CONNECTED_ID       = 0x01;
     private static final int NOTIFICATION_CONNECTION_LOST_ID = 0x02;
 
+    private static AccessoryDaemon sharedInstance = null;
+
     private AccessibilityServiceInfo info = new AccessibilityServiceInfo();
     private BluetoothSerial mBluetoothSerial;
 
     @Override
     protected void onServiceConnected() {
         Log.d(TAG, "onServiceConnected");
+
+        AccessoryDaemon.sharedInstance = this;
+
         info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
         info.flags = AccessibilityServiceInfo.DEFAULT;
         this.setServiceInfo(info);
+
+        mStart();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public boolean onUnbind(Intent intent) {
+        AccessoryDaemon.sharedInstance = null;
+        return super.onUnbind(intent);
+    }
+
+    private int mStart() {
         Log.d(TAG, "onStartCommand");
 
         IntentFilter intentFilter = new IntentFilter();
@@ -55,12 +67,17 @@ public class AccessoryDaemon extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         Log.d(TAG, String.valueOf(event.getText()));
+        int eventType = event.getEventType();
+        if(eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
+            mBluetoothSerial.write("n");
+        }
     }
 
     @Override
     public void onInterrupt() {
         Log.d(TAG, "onInterrupt");
     }
+
 
     private class ScreenListener extends BroadcastReceiver {
 
@@ -86,6 +103,7 @@ public class AccessoryDaemon extends AccessibilityService {
         @Override
         public void onDeviceFound(BluetoothDevice device, int status) {
             if(status == BluetoothSerial.STATUS_DEVICE_FOUND) {
+                Log.d(TAG, "Device found.");
                 mBluetoothSerial.connect(device);
             }
         }
@@ -93,13 +111,14 @@ public class AccessoryDaemon extends AccessibilityService {
         @Override
         public void onDeviceConnected(int status) {
             if(status == BluetoothSerial.STATUS_DEVICE_CONNECTED) {
+                Log.d(TAG, "Device connected.");
                 notifyPendantConnected();
             }
         }
 
         private void notifyPendantConnected() {
             NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(AccessoryDaemon.this)
-                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle(getString(R.string.notification_connected_title))
                     .setContentText(getString(R.string.notification_connected_text))
                     .setOngoing(true);
@@ -109,16 +128,17 @@ public class AccessoryDaemon extends AccessibilityService {
 
         @Override
         public void onMessageReceived(String message) {
-
+            Log.d(TAG, "Message received.");
         }
 
         @Override
         public void onConnectionLost() {
+            Log.d(TAG, "Connection lost.");
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             mNotificationManager.cancel(NOTIFICATION_CONNECTED_ID);
 
             NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(AccessoryDaemon.this)
-                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle(getString(R.string.notification_connection_lost_title))
                     .setContentText(getString(R.string.notification_connection_lost_text));
             mNotificationManager.notify(NOTIFICATION_CONNECTION_LOST_ID, mNotificationBuilder.build());
