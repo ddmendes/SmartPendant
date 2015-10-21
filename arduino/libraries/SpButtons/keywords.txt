@@ -1,0 +1,2 @@
+SpButtons	KEYWORD1
+checkButtons	KEYWORD2
