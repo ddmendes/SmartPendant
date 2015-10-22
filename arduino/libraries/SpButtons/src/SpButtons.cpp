@@ -1,5 +1,7 @@
 #include <SpButtons.h>
 #include <Arduino.h>
+#include <stdio.h>
+
 
 SpButtons::SpButtons(int pinBtnLeftTop, int pinBtnLeftBottom,
                      int pinBtnRightTop, int pinBtnRightBottom,
@@ -8,7 +10,6 @@ SpButtons::SpButtons(int pinBtnLeftTop, int pinBtnLeftBottom,
                        brtPin{pinBtnRightTop}, brbPin{pinBtnRightBottom},
                        activeState{btnActiveState}
 {
-    lastReading = 0;
     buttonState = 0;
 }
 
@@ -29,8 +30,15 @@ bool SpButtons::hasButtonsToRead() {
     return (buttonState & NEWVALUE_MASK) == NEWVALUE_MASK;
 }
 
-char* SpButtons::getJson() {
+void SpButtons::getJsonEvent(char* buffer, int max_size) {
     buttonState &= ~NEWVALUE_MASK;
+
+    snprintf(buffer, max_size,
+        "\"event\": {\"type\": \"button-push\", \"length\": \"short\", \"source\": \"%s\"}",
+        getPatternName());
+}
+
+char* SpButtons::getPatternName() {
     switch(buttonState) {
         case LTBUTTON_MASK:
             return LTBUTTON_NAME;
@@ -49,6 +57,6 @@ char* SpButtons::getJson() {
         case DBLRIGHT_MASK:
             return DBLRIGHT_NAME;
         default:
-            return "none";
+            return NULL;
     }
 }

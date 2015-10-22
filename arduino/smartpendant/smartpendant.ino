@@ -15,9 +15,11 @@
 #define RBBUTTON_PIN 10
 
 #define VIBRA_DURATION 200
+#define BUFFER_SIZE 300
 
 SoftwareSerial bt(4, 2);
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
+char* buffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 char op = NULL;
 bool vibra = false;
 bool doubleBlink = false;
@@ -33,7 +35,7 @@ void setup() {
   pinMode(LTBUTTON_PIN, INPUT_PULLUP);
   pinMode(LBBUTTON_PIN, INPUT_PULLUP);
   pinMode(RTBUTTON_PIN, INPUT_PULLUP);
-  pinMode(RBBUTTON_PIN, INPUT_PULLUP); 
+  pinMode(RBBUTTON_PIN, INPUT_PULLUP);
 
   // Bluetooth serial initialization.
   bt.begin(9600);
@@ -55,7 +57,11 @@ void setup() {
 void loop() {
   btns.checkButtons();
   if(btns.hasButtonsToRead()) {
-    Serial.println(btns.getJson());
+    btns.getJsonEvent(&(buffer[1]), BUFFER_SIZE - 1);
+    buffer[0] = '{';
+    strcat(buffer, "}");
+    bt.println(buffer);
+    Serial.println(buffer);
   }
 
 

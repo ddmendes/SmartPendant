@@ -14,6 +14,9 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class AccessoryDaemon extends AccessibilityService {
     public static final String TAG = "AccessoryDaemon";
     private static final String ACCESSORY_NAME_PREFIX = "HC-05";
@@ -128,7 +131,14 @@ public class AccessoryDaemon extends AccessibilityService {
 
         @Override
         public void onMessageReceived(String message) {
-            Log.d(TAG, "Message received.");
+            JSONObject event = null;
+            try {
+                event = new JSONObject(message);
+                SpEvent spEvent = new SpEvent(event.getJSONObject("event"));
+                Log.d(TAG, "Message received: " + spEvent.toString());
+            } catch (JSONException e) {
+                Log.e(TAG, "When parsing event JSON: " + e.getMessage());
+            }
         }
 
         @Override

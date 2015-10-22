@@ -26,7 +26,7 @@ public:
               int btnActiveState);
     void checkButtons();
     bool hasButtonsToRead();
-    char* getJson();
+    void getJsonEvent(char* buffer, int max_size);
 private:
     unsigned int buttonState;
     int activeState;
@@ -34,6 +34,8 @@ private:
     int blbPin;
     int brtPin;
     int brbPin;
+
+    char* getPatternName();
 };
 
 #endif

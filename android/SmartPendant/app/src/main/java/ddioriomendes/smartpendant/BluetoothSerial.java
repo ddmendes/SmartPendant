@@ -182,14 +182,21 @@ public class BluetoothSerial {
 
     Thread connectionListener = new Thread() {
         byte[] buffer = new byte[1024];
+        String message = "";
 
         @Override
         public void run() {
-            // TODO listen for incoming message
+            int n;
             try {
                 while(state == STATE_CONNECTED) {
-                    inputStream.read(buffer);
-                    Log.d("connectionListener", new String(buffer));
+                    n = inputStream.read(buffer);
+                    message = message.concat(new String(buffer, 0, n, "UTF8"));
+                    Log.d("connectionListener", message);
+
+                    if(message.endsWith("\n")) {
+                        listener.onMessageReceived(message);
+                        message = "";
+                    }
                 }
             } catch (IOException e) {
                 connectionLost();
