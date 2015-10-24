@@ -17,6 +17,9 @@ import android.view.accessibility.AccessibilityEvent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ddioriomendes.smartpendant.spmessage.SpEvent;
+import ddioriomendes.smartpendant.spmessage.SpVibratorActuation;
+
 public class AccessoryDaemon extends AccessibilityService {
     public static final String TAG = "AccessoryDaemon";
     private static final String ACCESSORY_NAME_PREFIX = "HC-05";
@@ -72,7 +75,9 @@ public class AccessoryDaemon extends AccessibilityService {
         Log.d(TAG, String.valueOf(event.getText()));
         int eventType = event.getEventType();
         if(eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
-            mBluetoothSerial.write("n");
+            SpVibratorActuation msg = new SpVibratorActuation(1, SpVibratorActuation.LENGTH_SHORT);
+            Log.d(TAG, "Sending message: " + msg.getJson());
+            mBluetoothSerial.write(msg.getJson());
         }
     }
 

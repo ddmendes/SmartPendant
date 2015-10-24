@@ -17,9 +17,13 @@
 #define VIBRA_DURATION 200
 #define BUFFER_SIZE 300
 
+void readBluetooth();
+
 SoftwareSerial bt(4, 2);
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
-char* buffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+char* outputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+int inputSize = 0;
 char op = NULL;
 bool vibra = false;
 bool doubleBlink = false;
@@ -57,13 +61,14 @@ void setup() {
 void loop() {
   btns.checkButtons();
   if(btns.hasButtonsToRead()) {
-    btns.getJsonEvent(&(buffer[1]), BUFFER_SIZE - 1);
-    buffer[0] = '{';
-    strcat(buffer, "}");
-    bt.println(buffer);
-    Serial.println(buffer);
+    btns.getJsonEvent(&(outputBuffer[1]), BUFFER_SIZE - 1);
+    outputBuffer[0] = '{';
+    strcat(outputBuffer, "}");
+    bt.println(outputBuffer);
+    Serial.println(outputBuffer);
   }
 
+  readBluetooth();
 
   if(vibra) {
     lastVibra = millis();
@@ -73,5 +78,15 @@ void loop() {
 
   if(!vibra && (millis() - lastVibra > VIBRA_DURATION)) {
     digitalWrite(VIBRA_PIN, LOW);
+  }
+}
+
+void readBluetooth() {
+  int l = bt.available();
+  if(l > 0) {
+    bt.readBytes(&(inputBuffer[inputSize]), l);
+    if(inputBuffer[inputSize - 1] == '\n') {
+      // TODO parse json
+    }
   }
 }

@@ -1,8 +1,9 @@
-package ddioriomendes.smartpendant;
+package ddioriomendes.smartpendant.spmessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -27,7 +28,8 @@ public class SpEvent {
     private static final String KEY_LENGTH = "length";
     private static final String KEY_SOURCE = "source";
 
-    private static final HashMap<String, Integer> paramMap = new ParamMap();
+    private static final HashMap<String, Integer> paramMap =
+            (HashMap<String, Integer>) Collections.unmodifiableMap(new ParamMap());
 
     private final int type;
     private final int length;
@@ -78,5 +80,16 @@ public class SpEvent {
         public Integer put(String key, Integer value) {
             throw new UnsupportedOperationException("This map is blocked to new entries.");
         }
+    }
+
+    public interface EventHandler {
+        public void onLeftTopButton();
+        public void onLeftBottomButton();
+        public void onRightTopButton();
+        public void onRightBottomButton();
+        public void onDoubleTopButton();
+        public void onDoubleBottomButton();
+        public void onDoubleLeftButton();
+        public void onDoubleRightButton();
     }
 }

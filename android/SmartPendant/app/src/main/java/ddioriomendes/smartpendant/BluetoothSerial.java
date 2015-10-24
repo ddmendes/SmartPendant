@@ -190,7 +190,7 @@ public class BluetoothSerial {
             try {
                 while(state == STATE_CONNECTED) {
                     n = inputStream.read(buffer);
-                    message = message.concat(new String(buffer, 0, n, "UTF8"));
+                    message = message.concat(new String(buffer, 0, n, "UTF-8"));
                     Log.d("connectionListener", message);
 
                     if(message.endsWith("\n")) {
