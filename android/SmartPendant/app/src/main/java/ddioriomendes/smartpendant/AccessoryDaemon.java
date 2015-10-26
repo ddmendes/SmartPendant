@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -20,7 +21,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
+import ddioriomendes.smartpendant.spmessage.SpActuation;
 import ddioriomendes.smartpendant.spmessage.SpEvent;
+import ddioriomendes.smartpendant.spmessage.SpLedActuation;
 import ddioriomendes.smartpendant.spmessage.SpVibratorActuation;
 
 public class AccessoryDaemon extends AccessibilityService {
@@ -49,9 +52,8 @@ public class AccessoryDaemon extends AccessibilityService {
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public void onDestroy() {
         AccessoryDaemon.sharedInstance = null;
-        return super.onUnbind(intent);
     }
 
     private int mStart() {
@@ -82,6 +84,24 @@ public class AccessoryDaemon extends AccessibilityService {
             SpVibratorActuation msg = new SpVibratorActuation(1, SpVibratorActuation.LENGTH_SHORT);
             Log.d(TAG, "Sending message: " + msg.getJson());
             mBluetoothSerial.write(msg.getJson());
+        }
+    }
+
+    public void btWrite(char c) {
+        SpLedActuation act = new SpLedActuation();
+        switch (c) {
+            case 'r':
+                act.blink(Color.RED, 1, 200);
+                mBluetoothSerial.write(act.getJson());
+                break;
+            case 'g':
+                act.blink(Color.GREEN, 1, 200);
+                mBluetoothSerial.write(act.getJson());
+                break;
+            case 'b':
+                act.blink(Color.BLUE, 1, 200);
+                mBluetoothSerial.write(act.getJson());
+                break;
         }
     }
 
@@ -189,5 +209,9 @@ public class AccessoryDaemon extends AccessibilityService {
                     break;
             }
         }
+    }
+
+    public static AccessoryDaemon getInstance() {
+        return AccessoryDaemon.sharedInstance;
     }
 }

@@ -14,6 +14,7 @@ import android.view.View;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
+    public AccessoryDaemon accessoryDaemon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,18 +27,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        accessoryDaemon = AccessoryDaemon.getInstance();
     }
 
     public void btnClick(View view) {
         switch (view.getId()) {
             case R.id.btnRed:
-                // TODO
+                accessoryDaemon.btWrite('r');
                 break;
             case R.id.btnGreen:
-                // TODO
+                accessoryDaemon.btWrite('g');
                 break;
             case R.id.btnBlue:
-                // TODO
+                accessoryDaemon.btWrite('b');
                 break;
         }
     }
@@ -45,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-
+        accessoryDaemon = null;
     }
 
     @Override

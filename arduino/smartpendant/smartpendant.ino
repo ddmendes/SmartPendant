@@ -72,34 +72,34 @@ void loop() {
     bt.println(outputBuffer);
   }
 
+  // if(bt.available()) {
+  //   char c = bt.read();
+  //   Serial.println(c);
+  //   digitalWrite(RED_PIN  , c == 'r' ? 255 : 0);
+  //   digitalWrite(GREEN_PIN, c == 'g' ? 255 : 0);
+  //   digitalWrite(BLUE_PIN , c == 'b' ? 255 : 0);
+  // }
   readBluetooth();
-
-  if(vibra) {
-    lastVibra = millis();
-    digitalWrite(VIBRA_PIN, HIGH);
-    vibra = false;
-  }
-
-  if(!vibra && (millis() - lastVibra > VIBRA_DURATION)) {
-    digitalWrite(VIBRA_PIN, LOW);
-  }
 }
 
 void readBluetooth() {
   int l = bt.available();
   if(l > 0) {
-    bt.readBytes(&(inputBuffer[inputSize]), l);
+    l = bt.readBytes(&(inputBuffer[inputSize]), l);
+    inputSize += l;
+
     if(inputBuffer[inputSize - 1] == '\n') {
       inputBuffer[inputSize - 1] = '\0';
       Serial.println(inputBuffer);
 
-      JsonObject& root = jsonBuffer.parseObject(inputBuffer);
-      JsonObject& actuation = root["actuation"];
-      int steps = actuation["steps"];
-      for(int i = 0; i < steps; i++) {
-        digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
-        delay((long) actuation["states"][i]["duration"]);
-      }
+      // JsonObject& root = jsonBuffer.parseObject(inputBuffer);
+      // JsonObject& actuation = root["actuation"];
+      // int steps = actuation["steps"];
+      // for(int i = 0; i < steps; i++) {
+      //   digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
+      //   delay((long) actuation["states"][i]["duration"]);
+      // }
+      inputSize = 0;
     }
   }
 }
