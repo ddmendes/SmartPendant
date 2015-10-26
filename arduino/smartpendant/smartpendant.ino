@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
 #include <SpButtons.h>
+#include <ArduinoJson.h>
 
 // Output pins
 #define RED_PIN   5
@@ -20,10 +21,14 @@
 void readBluetooth();
 
 SoftwareSerial bt(4, 2);
+
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
+
+StaticJsonBuffer<300> jsonBuffer;
 char* outputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 int inputSize = 0;
+
 char op = NULL;
 bool vibra = false;
 bool doubleBlink = false;
@@ -65,7 +70,6 @@ void loop() {
     outputBuffer[0] = '{';
     strcat(outputBuffer, "}");
     bt.println(outputBuffer);
-    Serial.println(outputBuffer);
   }
 
   readBluetooth();
@@ -86,7 +90,16 @@ void readBluetooth() {
   if(l > 0) {
     bt.readBytes(&(inputBuffer[inputSize]), l);
     if(inputBuffer[inputSize - 1] == '\n') {
-      // TODO parse json
+      inputBuffer[inputSize - 1] = '\0';
+      Serial.println(inputBuffer);
+
+      JsonObject& root = jsonBuffer.parseObject(inputBuffer);
+      JsonObject& actuation = root["actuation"];
+      int steps = actuation["steps"];
+      for(int i = 0; i < steps; i++) {
+        digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
+        delay((long) actuation["states"][i]["duration"]);
+      }
     }
   }
 }

@@ -16,7 +16,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Created by ddiorio on 30-Sep-15.
+ * Controls the bluetooth connection and communication routines.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class BluetoothSerial {
     public static final String TAG = "BluetoothSerial";
@@ -69,7 +70,7 @@ public class BluetoothSerial {
         }
 
         byte[] buffer = message.getBytes();
-        Log.d(TAG, new String(buffer));
+        Log.d(TAG, message);
 
         try {
             outputStream.write(buffer);
@@ -80,14 +81,18 @@ public class BluetoothSerial {
     }
 
     public void close() throws IOException {
-        mBluetoothSocket.close();
-        mBluetoothSocket = null;
+        if(state == STATE_CONNECTED) {
+            mBluetoothSocket.close();
+            mBluetoothSocket = null;
 
-        inputStream.close();
-        inputStream = null;
+            inputStream.close();
+            inputStream = null;
 
-        outputStream.close();
-        outputStream = null;
+            outputStream.close();
+            outputStream = null;
+        }
+
+        state = STATE_IDLE;
     }
 
     private final AsyncTask<String, Void, BluetoothDevice> asyncFindBondedDevice = new AsyncTask<String, Void, BluetoothDevice>() {

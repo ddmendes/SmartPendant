@@ -3,6 +3,7 @@ package ddioriomendes.smartpendant;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.NotificationManager;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,12 +18,13 @@ import android.view.accessibility.AccessibilityEvent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
 import ddioriomendes.smartpendant.spmessage.SpEvent;
 import ddioriomendes.smartpendant.spmessage.SpVibratorActuation;
 
 public class AccessoryDaemon extends AccessibilityService {
     public static final String TAG = "AccessoryDaemon";
-    private static final String ACCESSORY_NAME_PREFIX = "HC-05";
 
     private static final int NOTIFICATION_CONNECTED_ID       = 0x01;
     private static final int NOTIFICATION_CONNECTION_LOST_ID = 0x02;
@@ -60,12 +62,14 @@ public class AccessoryDaemon extends AccessibilityService {
         intentFilter.addAction(Intent.ACTION_SCREEN_ON);
         registerReceiver(new ScreenListener(), intentFilter);
 
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(new BluetoothStateListener(), intentFilter);
+
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
         telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
 
         mBluetoothSerial = new BluetoothSerial(this, btListener);
-        // TODO finds accessory asyncronously and repeat until connect.
-        mBluetoothSerial.findBondedDevice(ACCESSORY_NAME_PREFIX);
 
         return START_STICKY;
     }
@@ -159,4 +163,31 @@ public class AccessoryDaemon extends AccessibilityService {
             mNotificationManager.notify(NOTIFICATION_CONNECTION_LOST_ID, mNotificationBuilder.build());
         }
     };
+
+    private class BluetoothStateListener extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(!intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                Log.d("BluetoothStateListener", "Wrong action " + intent.getAction() + ".");
+                return;
+            }
+
+            final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+            switch (state) {
+                case BluetoothAdapter.STATE_ON:
+                    Log.d(TAG, "Bluetooth turned on.");
+                    mBluetoothSerial.findBondedDevice(getString(R.string.bt_serial_prefix));
+                    break;
+                case BluetoothAdapter.STATE_OFF:
+                    Log.d(TAG, "Bluetooth turned off.");
+                    try {
+                        mBluetoothSerial.close();
+                    } catch (IOException e) {
+                        Log.e(TAG, "When closing bluetooth serial: " + e.getMessage());
+                    }
+                    break;
+            }
+        }
+    }
 }
