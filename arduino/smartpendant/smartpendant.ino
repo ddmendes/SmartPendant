@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
 #include <SpButtons.h>
+#include <ArduinoJson.h>
 
 // Output pins
 #define RED_PIN   5
@@ -17,9 +18,17 @@
 #define VIBRA_DURATION 200
 #define BUFFER_SIZE 300
 
+void readBluetooth();
+
 SoftwareSerial bt(4, 2);
+
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
-char* buffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+
+StaticJsonBuffer<300> jsonBuffer;
+char* outputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+int inputSize = 0;
+
 char op = NULL;
 bool vibra = false;
 bool doubleBlink = false;
@@ -57,13 +66,13 @@ void setup() {
 void loop() {
   btns.checkButtons();
   if(btns.hasButtonsToRead()) {
-    btns.getJsonEvent(&(buffer[1]), BUFFER_SIZE - 1);
-    buffer[0] = '{';
-    strcat(buffer, "}");
-    bt.println(buffer);
-    Serial.println(buffer);
+    btns.getJsonEvent(&(outputBuffer[1]), BUFFER_SIZE - 1);
+    outputBuffer[0] = '{';
+    strcat(outputBuffer, "}");
+    bt.println(outputBuffer);
   }
 
+  readBluetooth();
 
   if(vibra) {
     lastVibra = millis();
@@ -73,5 +82,24 @@ void loop() {
 
   if(!vibra && (millis() - lastVibra > VIBRA_DURATION)) {
     digitalWrite(VIBRA_PIN, LOW);
+  }
+}
+
+void readBluetooth() {
+  int l = bt.available();
+  if(l > 0) {
+    bt.readBytes(&(inputBuffer[inputSize]), l);
+    if(inputBuffer[inputSize - 1] == '\n') {
+      inputBuffer[inputSize - 1] = '\0';
+      Serial.println(inputBuffer);
+
+      JsonObject& root = jsonBuffer.parseObject(inputBuffer);
+      JsonObject& actuation = root["actuation"];
+      int steps = actuation["steps"];
+      for(int i = 0; i < steps; i++) {
+        digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
+        delay((long) actuation["states"][i]["duration"]);
+      }
+    }
   }
 }

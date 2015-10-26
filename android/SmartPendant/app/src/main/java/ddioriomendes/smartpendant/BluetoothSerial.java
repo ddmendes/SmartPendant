@@ -16,7 +16,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Created by ddiorio on 30-Sep-15.
+ * Controls the bluetooth connection and communication routines.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class BluetoothSerial {
     public static final String TAG = "BluetoothSerial";
@@ -54,12 +55,12 @@ public class BluetoothSerial {
     }
 
     public void findBondedDevice(String deviceNamePrefix) {
-        asyncFindBondedDevice.execute(deviceNamePrefix);
+        new AsyncFindBondedDevice(deviceNamePrefix).execute();
     }
 
     public void connect(BluetoothDevice device) {
         state = STATE_CONNECTING;
-        asyncConnect.execute(device);
+        new AsyncConnect(device).execute();
     }
 
     public void write(String message) {
@@ -69,7 +70,7 @@ public class BluetoothSerial {
         }
 
         byte[] buffer = message.getBytes();
-        Log.d(TAG, new String(buffer));
+        Log.d(TAG, message);
 
         try {
             outputStream.write(buffer);
@@ -80,27 +81,34 @@ public class BluetoothSerial {
     }
 
     public void close() throws IOException {
-        mBluetoothSocket.close();
-        mBluetoothSocket = null;
+        if(state == STATE_CONNECTED) {
+            mBluetoothSocket.close();
+            mBluetoothSocket = null;
 
-        inputStream.close();
-        inputStream = null;
+            inputStream.close();
+            inputStream = null;
 
-        outputStream.close();
-        outputStream = null;
+            outputStream.close();
+            outputStream = null;
+        }
+
+        state = STATE_IDLE;
     }
 
-    private final AsyncTask<String, Void, BluetoothDevice> asyncFindBondedDevice = new AsyncTask<String, Void, BluetoothDevice>() {
-        @Override
-        protected BluetoothDevice doInBackground(String... params) {
-            if(params.length > 1) {
-                Log.e("asyncFileBondedDevice", "More than one name prefix requested. Request just one name prefix.");
-            }
+    private class AsyncFindBondedDevice extends AsyncTask<Void, Void, BluetoothDevice> {
 
+        private final String prefix;
+
+        public AsyncFindBondedDevice(String namePrefix) {
+            prefix = namePrefix;
+        }
+
+        @Override
+        protected BluetoothDevice doInBackground(Void... params) {
             Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
             for(BluetoothDevice device : pairedDevices) {
-                if(device.getName().startsWith(String.valueOf(params[0]))) {
+                if(device.getName().startsWith(prefix)) {
                     return device;
                 }
             }
@@ -115,20 +123,23 @@ public class BluetoothSerial {
                 listener.onDeviceFound(null, STATUS_DEVICE_NOT_FOUND);
             }
         }
-    };
+    }
 
-    private final AsyncTask<BluetoothDevice, Void, BluetoothSocket> asyncConnect = new AsyncTask<BluetoothDevice, Void, BluetoothSocket>() {
+    private class AsyncConnect extends AsyncTask<Void, Void, BluetoothSocket> {
+
+        private BluetoothDevice mBluetoothDevice;
+
+        public AsyncConnect(BluetoothDevice device) {
+            mBluetoothDevice = device;
+        }
+
         @Override
-        protected BluetoothSocket doInBackground(BluetoothDevice... params) {
-            if(params.length > 1) {
-                Log.e("asyncFileBondedDevice", "Connection requested to more than one device. The connection will run just for the first device.");
-            }
-
+        protected BluetoothSocket doInBackground(Void... params) {
             String uuid = mContext.getResources().getString(R.string.bt_serial_uuid);
             BluetoothSocket bSocket;
 
             try {
-                bSocket = params[0].createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
+                bSocket = mBluetoothDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
             } catch (IOException e) {
                 listener.onDeviceConnected(STATUS_CANNOT_OPEN_SOCKET);
                 state = STATE_IDLE;
@@ -174,13 +185,13 @@ public class BluetoothSerial {
                 outputStream = new BufferedOutputStream(tmpOutput);
 
                 state = STATE_CONNECTED;
-                connectionListener.start();
+                new ConnectionListener().start();
                 listener.onDeviceConnected(STATUS_DEVICE_CONNECTED);
             }
         }
-    };
+    }
 
-    Thread connectionListener = new Thread() {
+    private class ConnectionListener extends Thread {
         byte[] buffer = new byte[1024];
         String message = "";
 
@@ -190,7 +201,7 @@ public class BluetoothSerial {
             try {
                 while(state == STATE_CONNECTED) {
                     n = inputStream.read(buffer);
-                    message = message.concat(new String(buffer, 0, n, "UTF8"));
+                    message = message.concat(new String(buffer, 0, n, "UTF-8"));
                     Log.d("connectionListener", message);
 
                     if(message.endsWith("\n")) {
@@ -202,7 +213,7 @@ public class BluetoothSerial {
                 connectionLost();
             }
         }
-    };
+    }
 
     private void connectionLost() {
         Log.e(TAG, "Bluetooth connection lost.");
