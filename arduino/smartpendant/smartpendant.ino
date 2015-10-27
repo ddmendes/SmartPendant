@@ -24,7 +24,6 @@ SoftwareSerial bt(4, 2);
 
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
 
-StaticJsonBuffer<300> jsonBuffer;
 char* outputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 int inputSize = 0;
@@ -82,6 +81,9 @@ void loop() {
   readBluetooth();
 }
 
+#define LED_TARGET ("led")
+#define VIBRA_TARGET ("vibra")
+
 void readBluetooth() {
   int l = bt.available();
   if(l > 0) {
@@ -92,13 +94,27 @@ void readBluetooth() {
       inputBuffer[inputSize - 1] = '\0';
       Serial.println(inputBuffer);
 
-      // JsonObject& root = jsonBuffer.parseObject(inputBuffer);
-      // JsonObject& actuation = root["actuation"];
-      // int steps = actuation["steps"];
-      // for(int i = 0; i < steps; i++) {
-      //   digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
-      //   delay((long) actuation["states"][i]["duration"]);
-      // }
+      StaticJsonBuffer<300> jsonBuffer;
+      JsonObject& root = jsonBuffer.parseObject(inputBuffer);
+      JsonObject& actuation = root["actuation"];
+      String target = actuation["target"];
+      Serial.println(target);
+
+      if(target.compareTo(LED_TARGET) == 0) {
+        int steps = actuation["steps"];
+        for(int i = 0; i < steps; i++) {
+          digitalWrite(RED_PIN, (int) actuation["states"][i]["value"]["red"]);
+          digitalWrite(GREEN_PIN, (int) actuation["states"][i]["value"]["green"]);
+          digitalWrite(BLUE_PIN, (int) actuation["states"][i]["value"]["blue"]);
+          delay((long) actuation["states"][i]["duration"]);
+        }
+      } else if(target.compareTo(VIBRA_TARGET) == 0) {
+        int steps = actuation["steps"];
+        for(int i = 0; i < steps; i++) {
+          digitalWrite(VIBRA_PIN, (int) actuation["states"][i]["value"]);
+          delay((long) actuation["states"][i]["duration"]);
+        }
+      }
       inputSize = 0;
     }
   }

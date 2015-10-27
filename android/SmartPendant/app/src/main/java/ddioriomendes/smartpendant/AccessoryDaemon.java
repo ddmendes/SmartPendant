@@ -56,7 +56,7 @@ public class AccessoryDaemon extends AccessibilityService {
         AccessoryDaemon.sharedInstance = null;
     }
 
-    private int mStart() {
+    private void mStart() {
         Log.d(TAG, "onStartCommand");
 
         IntentFilter intentFilter = new IntentFilter();
@@ -72,8 +72,6 @@ public class AccessoryDaemon extends AccessibilityService {
         telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
 
         mBluetoothSerial = new BluetoothSerial(this, btListener);
-
-        return START_STICKY;
     }
 
     @Override
