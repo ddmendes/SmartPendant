@@ -19,8 +19,8 @@ public class SpActuation {
     }
 
     public String getJson() {
-        String json = "{\"actuation\": {\"target\": " + target +
-                ", \"steps\": " + states.size() + ", \"states\": [";
+        String json = "{\"actuation\": {\"target\": \"" + target +
+                "\", \"steps\": " + states.size() + ", \"states\": [";
         for(Value v : states) {
             json = json.concat(v.getJson() + ",");
         }
