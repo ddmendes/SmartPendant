@@ -1,5 +1,7 @@
 #include <SoftwareSerial.h>
 #include <SpButtons.h>
+#include <SpBluetooth.h>
+#include <SpActuation.h>
 #include <ArduinoJson.h>
 
 // Output pins
@@ -18,20 +20,18 @@
 #define VIBRA_DURATION 200
 #define BUFFER_SIZE 300
 
-void readBluetooth();
-
-SoftwareSerial bt(4, 2);
-
-SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
-
 char* outputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
-int inputSize = 0;
+
+SoftwareSerial softwareSerial(4, 2);
+SpBluetooth bluetooth(softwareSerial, inputBuffer);
+SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
+SpRgbLed led(RED_PIN, GREEN_PIN, BLUE_PIN);
+SpVibra vibra(VIBRA_PIN);
+SpActuation spActuation(led, vibra);
 
 char op = NULL;
-bool vibra = false;
 bool doubleBlink = false;
-long lastVibra;
 
 void setup() {
   // Pin modes.
@@ -45,8 +45,8 @@ void setup() {
   pinMode(RTBUTTON_PIN, INPUT_PULLUP);
   pinMode(RBBUTTON_PIN, INPUT_PULLUP);
 
-  // Bluetooth serial initialization.
-  bt.begin(9600);
+  // Bluetooth initialization.
+  bluetooth.begin(9600);
 
   // Serial initialization for loggin
   Serial.begin(9600);
@@ -68,19 +68,20 @@ void loop() {
     btns.getJsonEvent(&(outputBuffer[1]), BUFFER_SIZE - 1);
     outputBuffer[0] = '{';
     strcat(outputBuffer, "}");
-    bt.println(outputBuffer);
+    bluetooth.write(outputBuffer);
   }
 
-  // if(bt.available()) {
-  //   char c = bt.read();
-  //   Serial.println(c);
-  //   digitalWrite(RED_PIN  , c == 'r' ? 255 : 0);
-  //   digitalWrite(GREEN_PIN, c == 'g' ? 255 : 0);
-  //   digitalWrite(BLUE_PIN , c == 'b' ? 255 : 0);
-  // }
-  readBluetooth();
+  if(bluetooth.loop()) {
+    Serial.println(inputBuffer);
+    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    JsonObject& msg = jsonBuffer.parseObject(inputBuffer);
+    spActuation.actuate(msg["actuation"]);
+  }
+
+  spActuation.loop();
 }
 
+/*
 #define LED_TARGET ("led")
 #define VIBRA_TARGET ("vibra")
 
@@ -119,3 +120,4 @@ void readBluetooth() {
     }
   }
 }
+*/

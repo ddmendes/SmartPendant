@@ -1,0 +1,6 @@
+SpActuation	KEYWORD1
+SpRgbLed	KEYWORD1
+SpVibra	KEYWORD1
+
+actuate	KEYWORD2
+loop	KEYWORD2
