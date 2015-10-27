@@ -1,6 +1,7 @@
 #include <SoftwareSerial.h>
 #include <SpButtons.h>
 #include <SpBluetooth.h>
+#include <SpActuation.h>
 #include <ArduinoJson.h>
 
 // Output pins
@@ -25,11 +26,12 @@ char* inputBuffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
 SoftwareSerial softwareSerial(4, 2);
 SpBluetooth bluetooth(softwareSerial, inputBuffer);
 SpButtons btns(LTBUTTON_PIN, LBBUTTON_PIN, RTBUTTON_PIN, RBBUTTON_PIN, LOW);
+SpRgbLed led(RED_PIN, GREEN_PIN, BLUE_PIN);
+SpVibra vibra(VIBRA_PIN);
+SpActuation spActuation(led, vibra);
 
 char op = NULL;
-bool vibra = false;
 bool doubleBlink = false;
-long lastVibra;
 
 void setup() {
   // Pin modes.
@@ -66,12 +68,17 @@ void loop() {
     btns.getJsonEvent(&(outputBuffer[1]), BUFFER_SIZE - 1);
     outputBuffer[0] = '{';
     strcat(outputBuffer, "}");
-    bluetooth.println(outputBuffer);
+    bluetooth.write(outputBuffer);
   }
 
   if(bluetooth.loop()) {
     Serial.println(inputBuffer);
+    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    JsonObject& msg = jsonBuffer.parseObject(inputBuffer);
+    spActuation.actuate(msg["actuation"]);
   }
+
+  spActuation.loop();
 }
 
 /*

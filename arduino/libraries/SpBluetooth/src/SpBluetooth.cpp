@@ -14,7 +14,7 @@ bool SpBluetooth::loop() {
   int l = serial.available();
 
   if(l == 0) {
-    return NULL;
+    return false;
   }
 
   l = serial.readBytes(&(inputBuffer[inputUsage]), l);
@@ -22,14 +22,12 @@ bool SpBluetooth::loop() {
 
   if(inputBuffer[inputUsage - 1] == '\n') {
     inputBuffer[inputUsage - 1] = '\0';
-    String s = inputBuffer;
-    Serial.println(s);
     inputUsage = 0;
 
-    return &s;
+    return true;
   }
 
-  return NULL;
+  return false;
 }
 
 void SpBluetooth::write(const char* message) {
