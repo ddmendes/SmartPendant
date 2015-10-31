@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+@Deprecated
 public class BootListener extends BroadcastReceiver {
 
     public static final String TAG = "BootListener";

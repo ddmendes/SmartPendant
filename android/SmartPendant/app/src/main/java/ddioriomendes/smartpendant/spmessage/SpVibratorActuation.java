@@ -1,7 +1,8 @@
 package ddioriomendes.smartpendant.spmessage;
 
 /**
- * Created by ddiorio on 24-Oct-15.
+ * Abstracts the creation of vibra actuation messages
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class SpVibratorActuation extends SpActuation {
 

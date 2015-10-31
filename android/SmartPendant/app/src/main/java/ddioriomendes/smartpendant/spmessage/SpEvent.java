@@ -12,17 +12,17 @@ import java.util.HashMap;
 public class SpEvent {
     private static final String TAG = "SpEvent";
 
-    private static final int TYPE_BUTTON_PUSH = 10;
-    private static final int LENGTH_SHORT = 20;
-    private static final int LENGTH_LONG = 21;
-    private static final int SRC_LEFT_TOP = 30;
-    private static final int SRC_LEFT_BOTTOM = 31;
-    private static final int SRC_RIGHT_TOP = 32;
-    private static final int SRC_RIGHT_BOTTOM = 33;
-    private static final int SRC_DOUBLE_TOP = 34;
-    private static final int SRC_DOUBLE_BOTTOM = 35;
-    private static final int SRC_DOUBLE_LEFT = 36;
-    private static final int SRC_DOUBLE_RIGHT = 37;
+    public static final int TYPE_BUTTON_PUSH = 10;
+    public static final int LENGTH_SHORT = 20;
+    public static final int LENGTH_LONG = 21;
+    public static final int SRC_LEFT_TOP = 30;
+    public static final int SRC_LEFT_BOTTOM = 31;
+    public static final int SRC_RIGHT_TOP = 32;
+    public static final int SRC_RIGHT_BOTTOM = 33;
+    public static final int SRC_DOUBLE_TOP = 34;
+    public static final int SRC_DOUBLE_BOTTOM = 35;
+    public static final int SRC_DOUBLE_LEFT = 36;
+    public static final int SRC_DOUBLE_RIGHT = 37;
 
     private static final String KEY_TYPE = "type";
     private static final String KEY_LENGTH = "length";
@@ -82,13 +82,6 @@ public class SpEvent {
     }
 
     public interface EventHandler {
-        public void onLeftTopButton();
-        public void onLeftBottomButton();
-        public void onRightTopButton();
-        public void onRightBottomButton();
-        public void onDoubleTopButton();
-        public void onDoubleBottomButton();
-        public void onDoubleLeftButton();
-        public void onDoubleRightButton();
+        public void onEvent(SpEvent event);
     }
 }

@@ -1,12 +1,12 @@
 package ddioriomendes.smartpendant;
 
-import android.content.Context;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 /**
- * Created by ddiorio on 21-Sep-15.
+ * Listens for phone state changes.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class PhoneListener extends PhoneStateListener {
 
