@@ -1,16 +1,16 @@
 package ddioriomendes.smartpendant;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+/**
+ * SmartPendants main activity.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
+ */
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
@@ -21,8 +21,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.mipmap.sp_launcher);
+        try {
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setIcon(R.mipmap.sp_launcher);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "When styling action bar: " + e.getMessage());
+        }
     }
 
     @Override

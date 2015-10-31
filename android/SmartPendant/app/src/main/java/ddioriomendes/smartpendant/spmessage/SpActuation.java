@@ -3,7 +3,8 @@ package ddioriomendes.smartpendant.spmessage;
 import java.util.ArrayList;
 
 /**
- * Created by ddiorio on 24-Oct-15.
+ * Controls the creation and JSON generation of SmartPendant actuation messages.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class SpActuation {
     private String target;
@@ -27,7 +28,7 @@ public class SpActuation {
         return json.concat("]}}\n");
     }
 
-    protected abstract class Value<T extends Object> {
+    protected abstract class Value<T> {
         protected T value;
         protected long duration;
 

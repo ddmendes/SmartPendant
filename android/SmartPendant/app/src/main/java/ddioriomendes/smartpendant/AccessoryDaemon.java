@@ -21,11 +21,18 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-import ddioriomendes.smartpendant.spmessage.SpActuation;
+import ddioriomendes.smartpendant.context.ContextWrapper;
 import ddioriomendes.smartpendant.spmessage.SpEvent;
 import ddioriomendes.smartpendant.spmessage.SpLedActuation;
 import ddioriomendes.smartpendant.spmessage.SpVibratorActuation;
 
+/**
+ * SmartPendant background service.
+ *
+ * Controls the resource instantiation, receives notification state change and listens telephony state.
+ *
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
+ */
 public class AccessoryDaemon extends AccessibilityService {
     public static final String TAG = "AccessoryDaemon";
 
@@ -36,6 +43,7 @@ public class AccessoryDaemon extends AccessibilityService {
 
     private AccessibilityServiceInfo info = new AccessibilityServiceInfo();
     private BluetoothSerial mBluetoothSerial;
+    private ContextWrapper contextWrapper;
 
     @Override
     protected void onServiceConnected() {
@@ -72,6 +80,7 @@ public class AccessoryDaemon extends AccessibilityService {
         telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
 
         mBluetoothSerial = new BluetoothSerial(this, btListener);
+        contextWrapper = ContextWrapper.getInstance(this.getApplicationContext());
     }
 
     @Override
@@ -158,10 +167,12 @@ public class AccessoryDaemon extends AccessibilityService {
 
         @Override
         public void onMessageReceived(String message) {
-            JSONObject event = null;
+            JSONObject event;
             try {
                 event = new JSONObject(message);
                 SpEvent spEvent = new SpEvent(event.getJSONObject("event"));
+                contextWrapper.onEvent(spEvent);
+
                 Log.d(TAG, "Message received: " + spEvent.toString());
             } catch (JSONException e) {
                 Log.e(TAG, "When parsing event JSON: " + e.getMessage());

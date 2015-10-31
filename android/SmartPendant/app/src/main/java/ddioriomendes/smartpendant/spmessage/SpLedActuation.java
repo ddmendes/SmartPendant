@@ -3,7 +3,8 @@ package ddioriomendes.smartpendant.spmessage;
 import android.graphics.Color;
 
 /**
- * Created by ddiorio on 26-Oct-15.
+ * Abstracts the creation of led actuation messages.
+ * @author Davi Diorio Mendes [ddioriomendes@gmail.com]
  */
 public class SpLedActuation extends SpActuation {
 
