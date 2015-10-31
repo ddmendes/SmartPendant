@@ -66,6 +66,8 @@ public class AccessoryDaemon extends AccessibilityService {
 
     private void mStart() {
         Log.d(TAG, "onStartCommand");
+        mBluetoothSerial = new BluetoothSerial(this, btListener);
+        contextWrapper = ContextWrapper.getInstance(this.getApplicationContext());
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -79,8 +81,6 @@ public class AccessoryDaemon extends AccessibilityService {
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
         telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
 
-        mBluetoothSerial = new BluetoothSerial(this, btListener);
-        contextWrapper = ContextWrapper.getInstance(this.getApplicationContext());
     }
 
     @Override
@@ -194,6 +194,12 @@ public class AccessoryDaemon extends AccessibilityService {
     };
 
     private class BluetoothStateListener extends BroadcastReceiver {
+
+        public BluetoothStateListener() {
+            if(mBluetoothSerial.isEnabled()) {
+                mBluetoothSerial.findBondedDevice(getString(R.string.bt_serial_prefix));
+            }
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {

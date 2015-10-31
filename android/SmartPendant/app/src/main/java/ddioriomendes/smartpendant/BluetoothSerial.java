@@ -54,6 +54,10 @@ public class BluetoothSerial {
         state = STATE_IDLE;
     }
 
+    public Boolean isEnabled() {
+        return mBluetoothAdapter.isEnabled();
+    }
+
     public void findBondedDevice(String deviceNamePrefix) {
         new AsyncFindBondedDevice(deviceNamePrefix).execute();
     }
