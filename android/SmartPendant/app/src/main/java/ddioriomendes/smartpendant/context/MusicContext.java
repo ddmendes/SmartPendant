@@ -81,9 +81,8 @@ public class MusicContext implements ContextWrapper.Context{
     protected SpEvent.EventHandler playPauseHandler = new SpEvent.EventHandler() {
         @Override
         public void onEvent(SpEvent event) {
-            String s = MUSIC_COMMAND + "." + CMD_TOGGLEPAUSE;
-            Log.d(TAG, s); // "playPauseHandler");
-            Intent intent = new Intent(MUSIC_COMMAND + "." + CMD_TOGGLEPAUSE);
+            Log.d(TAG, "playPauseHandler");
+            Intent intent = new Intent(MUSIC_COMMAND);
             intent.putExtra(COMMAND, CMD_TOGGLEPAUSE);
             mContext.sendBroadcast(intent);
         }
@@ -93,7 +92,7 @@ public class MusicContext implements ContextWrapper.Context{
         @Override
         public void onEvent(SpEvent event) {
             Log.d(TAG, "stopHandler");
-            Intent intent = new Intent(MUSIC_COMMAND + "." + CMD_STOP);
+            Intent intent = new Intent(MUSIC_COMMAND);
             intent.putExtra(COMMAND, CMD_STOP);
             mContext.sendBroadcast(intent);
         }
@@ -103,7 +102,7 @@ public class MusicContext implements ContextWrapper.Context{
         @Override
         public void onEvent(SpEvent event) {
             Log.d(TAG, "nextHandler");
-            Intent intent = new Intent(MUSIC_COMMAND + "." + CMD_NEXT);
+            Intent intent = new Intent(MUSIC_COMMAND);
             intent.putExtra(COMMAND, CMD_NEXT);
             mContext.sendBroadcast(intent);
         }
@@ -113,7 +112,7 @@ public class MusicContext implements ContextWrapper.Context{
         @Override
         public void onEvent(SpEvent event) {
             Log.d(TAG, "previousHandler");
-            Intent intent = new Intent(MUSIC_COMMAND + "." + CMD_PREVIOUS);
+            Intent intent = new Intent(MUSIC_COMMAND);
             intent.putExtra(COMMAND, CMD_PREVIOUS);
             mContext.sendBroadcast(intent);
         }
