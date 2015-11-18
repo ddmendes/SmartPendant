@@ -11,20 +11,22 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 
-import ddioriomendes.smartpendant.context.ContextWrapper;
-import ddioriomendes.smartpendant.spmessage.SpEvent;
+import ddioriomendes.smartpendant.spcontext.ContextWrapper;
 import ddioriomendes.smartpendant.spmessage.SpLedActuation;
+import ddioriomendes.smartpendant.spmessage.SpMessage;
 import ddioriomendes.smartpendant.spmessage.SpVibratorActuation;
+
+/*
+ * Este trabalho eu preciso
+ * concluir pra eu casar
+ * com uma pi muito lindinha
+ * que encantou o meu olhar
+ */
 
 /**
  * SmartPendant background service.
@@ -44,6 +46,7 @@ public class AccessoryDaemon extends AccessibilityService {
     private AccessibilityServiceInfo info = new AccessibilityServiceInfo();
     private BluetoothSerial mBluetoothSerial;
     private ContextWrapper contextWrapper;
+    private SpMessage spMessage;
 
     @Override
     protected void onServiceConnected() {
@@ -66,6 +69,10 @@ public class AccessoryDaemon extends AccessibilityService {
 
     private void mStart() {
         Log.d(TAG, "onStartCommand");
+        mBluetoothSerial = new BluetoothSerial(this, btListener);
+        contextWrapper = ContextWrapper.getInstance(this.getApplicationContext());
+        spMessage = new SpMessage();
+        spMessage.addEventListener(contextWrapper);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -76,11 +83,11 @@ public class AccessoryDaemon extends AccessibilityService {
         intentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(new BluetoothStateListener(), intentFilter);
 
-        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-        telephonyManager.listen(new PhoneListener(telephonyManager), PhoneStateListener.LISTEN_CALL_STATE);
-
-        mBluetoothSerial = new BluetoothSerial(this, btListener);
-        contextWrapper = ContextWrapper.getInstance(this.getApplicationContext());
+        try {
+            Process p = Runtime.getRuntime().exec("su");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -88,28 +95,35 @@ public class AccessoryDaemon extends AccessibilityService {
         Log.d(TAG, String.valueOf(event.getText()));
         int eventType = event.getEventType();
         if(eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
-            SpVibratorActuation msg = new SpVibratorActuation(1, SpVibratorActuation.LENGTH_SHORT);
-            Log.d(TAG, "Sending message: " + msg.getJson());
-            mBluetoothSerial.write(msg.getJson());
+            SpMessage.Builder builder = spMessage.getBuilder();
+            builder.addActuation(SpLedActuation.blink(Color.CYAN, 2, 200));
+            builder.addActuation(SpVibratorActuation.vibrate(2, SpVibratorActuation.LENGTH_SHORT));
+            String msg = builder.buildMessage();
+            Log.d(TAG, "Sending message: " + msg);
+            mBluetoothSerial.write(msg);
         }
     }
 
     public void btWrite(char c) {
-        SpLedActuation act = new SpLedActuation();
+        SpMessage.Builder builder = spMessage.getBuilder();
+
         switch (c) {
             case 'r':
-                act.blink(Color.RED, 1, 200);
-                mBluetoothSerial.write(act.getJson());
+                builder.addActuation(SpLedActuation.blink(Color.RED, 2, 200));
                 break;
             case 'g':
-                act.blink(Color.GREEN, 1, 200);
-                mBluetoothSerial.write(act.getJson());
+                builder.addActuation(SpLedActuation.blink(Color.GREEN, 2, 200));
                 break;
             case 'b':
-                act.blink(Color.BLUE, 1, 200);
-                mBluetoothSerial.write(act.getJson());
+                builder.addActuation(SpLedActuation.blink(Color.BLUE, 2, 200));
+                break;
+            case 'v':
+                builder.addActuation(SpVibratorActuation.vibrate(2, 200));
+                builder.addActuation(SpLedActuation.blink(Color.BLUE, 2, 200));
                 break;
         }
+
+        mBluetoothSerial.write(builder.buildMessage());
     }
 
     @Override
@@ -138,7 +152,9 @@ public class AccessoryDaemon extends AccessibilityService {
         }
     }
 
-    private BluetoothSerial.BluetoothSerialListener btListener = new BluetoothSerial.BluetoothSerialListener() {
+    private BluetoothSerial.BluetoothSerialListener btListener =
+            new BluetoothSerial.BluetoothSerialListener() {
+
         @Override
         public void onDeviceFound(BluetoothDevice device, int status) {
             if(status == BluetoothSerial.STATUS_DEVICE_FOUND) {
@@ -167,16 +183,7 @@ public class AccessoryDaemon extends AccessibilityService {
 
         @Override
         public void onMessageReceived(String message) {
-            JSONObject event;
-            try {
-                event = new JSONObject(message);
-                SpEvent spEvent = new SpEvent(event.getJSONObject("event"));
-                contextWrapper.onEvent(spEvent);
-
-                Log.d(TAG, "Message received: " + spEvent.toString());
-            } catch (JSONException e) {
-                Log.e(TAG, "When parsing event JSON: " + e.getMessage());
-            }
+            spMessage.processMessage(message);
         }
 
         @Override
@@ -194,6 +201,12 @@ public class AccessoryDaemon extends AccessibilityService {
     };
 
     private class BluetoothStateListener extends BroadcastReceiver {
+
+        public BluetoothStateListener() {
+            if(mBluetoothSerial.isEnabled()) {
+                mBluetoothSerial.findBondedDevice(getString(R.string.bt_serial_prefix));
+            }
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {

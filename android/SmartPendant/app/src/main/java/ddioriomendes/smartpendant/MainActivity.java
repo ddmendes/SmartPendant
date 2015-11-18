@@ -46,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.btnBlue:
                 accessoryDaemon.btWrite('b');
                 break;
+            case R.id.btnVibra:
+                accessoryDaemon.btWrite('v');
+                break;
         }
     }
 

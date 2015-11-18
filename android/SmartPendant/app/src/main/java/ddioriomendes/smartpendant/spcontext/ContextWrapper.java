@@ -1,6 +1,5 @@
-package ddioriomendes.smartpendant.context;
+package ddioriomendes.smartpendant.spcontext;
 
-import android.content.Context;
 import android.util.Log;
 
 import java.security.InvalidParameterException;
@@ -41,8 +40,8 @@ public class ContextWrapper implements SpEvent.EventHandler {
         doubleRightHandlers = new ArrayList<>();
     }
     
-    protected void registerSpEventHandler(int button, Context context, SpEvent.EventHandler handler) {
-        CEHTuple entry = new CEHTuple(context, handler);
+    protected void registerSpEventHandler(int button, SpContext spContext, SpEvent.EventHandler handler) {
+        CEHTuple entry = new CEHTuple(spContext, handler);
         switch (button) {
             case SpEvent.SRC_LEFT_TOP:
                 leftTopHandlers.add(entry);
@@ -77,6 +76,7 @@ public class ContextWrapper implements SpEvent.EventHandler {
     public static ContextWrapper getInstance(android.content.Context context) {
         if(sharedInstance == null) {
             sharedInstance = new ContextWrapper(context);
+            RingingContext.construct(context);
             MusicContext.construct(context);
         }
         return sharedInstance;
@@ -87,7 +87,7 @@ public class ContextWrapper implements SpEvent.EventHandler {
         ArrayList<CEHTuple> searchScope = getHandlerList(event.getSource());
 
         for(CEHTuple tuple : searchScope) {
-            if(tuple.context.isActive()) {
+            if(tuple.spContext.isActive()) {
                 tuple.eventHandler.onEvent(event);
                 break;
             }
@@ -118,16 +118,16 @@ public class ContextWrapper implements SpEvent.EventHandler {
         }
     }
 
-    protected interface Context {
-        public Boolean isActive();
+    protected interface SpContext {
+        Boolean isActive();
     }
 
     private class CEHTuple {
-        protected Context context;
-        protected SpEvent.EventHandler eventHandler;
+        protected final SpContext spContext;
+        protected final SpEvent.EventHandler eventHandler;
 
-        protected CEHTuple(Context C, SpEvent.EventHandler EH) {
-            context = C;
+        protected CEHTuple(SpContext C, SpEvent.EventHandler EH) {
+            spContext = C;
             eventHandler = EH;
         }
     }

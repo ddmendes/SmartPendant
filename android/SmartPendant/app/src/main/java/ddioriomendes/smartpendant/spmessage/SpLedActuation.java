@@ -12,14 +12,18 @@ public class SpLedActuation extends SpActuation {
         super("led");
     }
 
-    public void blink(int color, int count, int length) {
+    public static SpLedActuation blink(int color, int count, int length) {
+        SpLedActuation led = new SpLedActuation();
+
         for(int i = 0; i < count; ++i) {
-            addState(new LedValue(color, length));
-            addState(new LedValue(Color.BLACK, length));
+            led.addState(new LedValue(color, length));
+            led.addState(new LedValue(Color.BLACK, length));
         }
+
+        return led;
     }
 
-    private class LedValue extends Value<Integer> {
+    private static class LedValue extends Value<Integer> {
 
         public LedValue(int color, long duration) {
             value = color;
@@ -28,10 +32,10 @@ public class SpLedActuation extends SpActuation {
 
         @Override
         public String getJson() {
-            return "{\"value\": {\"red\": " + Color.red(value) +
-                    ", \"green\": " + Color.green(value) +
-                    ", \"blue\": " + Color.blue(value) +
-                    "}, \"duration\": " + duration + "}";
+            return "{\"val\":{\"r\":" + Color.red(value) +
+                    ",\"g\":" + Color.green(value) +
+                    ",\"b\":" + Color.blue(value) +
+                    "},\"dur\":" + duration + "}";
         }
     }
 }
