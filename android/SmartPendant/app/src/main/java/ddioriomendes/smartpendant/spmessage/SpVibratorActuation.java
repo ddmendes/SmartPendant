@@ -8,15 +8,22 @@ public class SpVibratorActuation extends SpActuation {
 
     public static final int LENGTH_SHORT = 200;
 
-    public SpVibratorActuation(int pulses, long pulseLength) {
+    public SpVibratorActuation() {
         super("vibra");
-        for(int i = 0; i < pulses; ++i) {
-            addState(new VibratorValue(255, pulseLength));
-            addState(new VibratorValue(0, pulseLength));
-        }
     }
 
-    protected class VibratorValue extends Value<Integer> {
+    public static SpVibratorActuation vibrate(int pulses, long pulseLength) {
+        SpVibratorActuation vibra = new SpVibratorActuation();
+
+        for(int i = 0; i < pulses; ++i) {
+            vibra.addState(new VibratorValue(1, pulseLength));
+            vibra.addState(new VibratorValue(0, pulseLength));
+        }
+
+        return vibra;
+    }
+
+    protected static class VibratorValue extends Value<Integer> {
 
         public VibratorValue(Integer value, long pulseLength) {
             this.value = value;
@@ -25,7 +32,7 @@ public class SpVibratorActuation extends SpActuation {
 
         @Override
         public String getJson() {
-            return "{\"value\": " + value + ", \"duration\": " + duration + "}";
+            return "{\"val\": " + value + ", \"dur\": " + duration + "}";
         }
     }
 }

@@ -1,4 +1,4 @@
-package ddioriomendes.smartpendant.context;
+package ddioriomendes.smartpendant.spcontext;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +10,7 @@ import ddioriomendes.smartpendant.spmessage.SpEvent;
 /**
  * Created by ddiorio on 29-Oct-15.
  */
-public class MusicContext implements ContextWrapper.Context{
+public class MusicContext implements ContextWrapper.SpContext {
     private static final String TAG = "MusicContext";
     private static final String MUSIC_COMMAND = "com.android.music.musicservicecommand";
     private static final String COMMAND = "command";
@@ -23,10 +23,12 @@ public class MusicContext implements ContextWrapper.Context{
 
     private Context mContext;
     private AudioManager mAudioManager;
+    private boolean paused;
 
     private MusicContext(Context context) {
         mContext = context;
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        paused = false;
         Log.d(TAG, "MusicContext created.");
     }
 
@@ -40,12 +42,12 @@ public class MusicContext implements ContextWrapper.Context{
 
     @Override
     public Boolean isActive() {
-        Boolean b = mAudioManager.isMusicActive();
+        Boolean b = mAudioManager.isMusicActive() || paused;
         Log.d(TAG, "isActive(): " + b);
         return b;
     }
 
-    public static void construct(Context context) {
+    protected static void construct(Context context) {
         if(sharedInstance == null) {
             sharedInstance = new MusicContext(context);
         }
@@ -58,22 +60,17 @@ public class MusicContext implements ContextWrapper.Context{
                 sharedInstance.playPauseHandler);
 
         contextWrapper.registerSpEventHandler(
-                SpEvent.SRC_RIGHT_TOP,
-                sharedInstance,
-                sharedInstance.stopHandler);
-
-        contextWrapper.registerSpEventHandler(
-                SpEvent.SRC_RIGHT_TOP,
-                sharedInstance,
-                sharedInstance.stopHandler);
-
-        contextWrapper.registerSpEventHandler(
                 SpEvent.SRC_LEFT_BOTTOM,
+                sharedInstance,
+                sharedInstance.stopHandler);
+
+        contextWrapper.registerSpEventHandler(
+                SpEvent.SRC_RIGHT_BOTTOM,
                 sharedInstance,
                 sharedInstance.previousHandler);
 
         contextWrapper.registerSpEventHandler(
-                SpEvent.SRC_RIGHT_BOTTOM,
+                SpEvent.SRC_RIGHT_TOP,
                 sharedInstance,
                 sharedInstance.nextHandler);
     }

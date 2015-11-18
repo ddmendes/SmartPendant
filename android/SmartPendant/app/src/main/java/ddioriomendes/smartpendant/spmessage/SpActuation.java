@@ -20,15 +20,23 @@ public class SpActuation {
     }
 
     public String getJson() {
-        String json = "{\"actuation\": {\"target\": \"" + target +
-                "\", \"steps\": " + states.size() + ", \"states\": [";
-        for(Value v : states) {
-            json = json.concat(v.getJson() + ",");
+        String json = "{\"target\":\"" + target +
+                "\",\"states\":[";
+        int i = 0;
+
+        for(i = 0; i < states.size() - 1; ++i) {
+            json = json.concat(states.get(i).getJson() + ",");
         }
-        return json.concat("]}}\n");
+        json = json.concat(states.get(i).getJson());
+
+        /*for(Value v : states) {
+            json = json.concat(v.getJson() + ",");
+        }*/
+
+        return json.concat("]}");
     }
 
-    protected abstract class Value<T> {
+    protected static abstract class Value<T> {
         protected T value;
         protected long duration;
 

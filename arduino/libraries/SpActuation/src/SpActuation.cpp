@@ -1,16 +1,33 @@
 #include <SpActuation.h>
 #include <Arduino.h>
+#include <string.h>
 
 SpActuation::SpActuation(SpRgbLed& led, SpVibra& vibra)
     : led(led), vibra(vibra) {}
 
 void SpActuation::actuate(const JsonObject& act) {
-  String target = act["target"];
+  int actuations = act["acts"].size();
+  Serial.print("actuations: ");
+  Serial.println(actuations);
 
-  if(target.compareTo(LED_TARGET) == 0) {
-    led.actuate(act);
-  } else if(target.compareTo(VIBRA_TARGET) == 0) {
-    vibra.actuate(act);
+  JsonArray& acts = act["acts"];
+  Serial.println(acts.size());
+  Serial.println((const char *) act["acts"][0]["target"]);
+  Serial.println((const char *) act["acts"][1]["target"]);
+
+  for(int i = 0; i < actuations; i++) {
+    JsonObject& actuate = act["acts"][i];
+    const char* target = actuate["target"];
+    Serial.print("target: ");
+    Serial.println(target);
+    
+    if(strcmp(target, LED_TARGET) == 0) {
+      Serial.println("Dispatching to led");
+      led.actuate(actuate);
+    } else if(strcmp(target, VIBRA_TARGET) == 0) {
+      Serial.println("Dispatching to vibra");
+      vibra.actuate(actuate);
+    }
   }
 }
 
@@ -26,14 +43,14 @@ SpRgbLed::SpRgbLed(int redPin, int greenPin, int bluePin)
 }
 
 void SpRgbLed::actuate(const JsonObject& act) {
-  steps = act["steps"];
+  steps = act["states"].size();
   position = 0;
 
   for(int i = 0; i < steps; ++i) {
-    state[i].red = act["states"][i]["value"]["red"];
-    state[i].green = act["states"][i]["value"]["green"];
-    state[i].blue = act["states"][i]["value"]["blue"];
-    state[i].duration = act["states"][i]["duration"];
+    state[i].red = act["states"][i]["val"]["r"];
+    state[i].green = act["states"][i]["val"]["g"];
+    state[i].blue = act["states"][i]["val"]["b"];
+    state[i].duration = act["states"][i]["dur"];
   }
 }
 
@@ -65,26 +82,26 @@ void SpRgbLed::loop() {
 SpVibra::SpVibra(int pin) : pin(pin) {}
 
 void SpVibra::actuate(const JsonObject& act) {
-  steps = act["steps"];
+  steps = act["states"].size();
   position = 0;
 
   for(int i = 0; i < steps; ++i) {
-    state[i].level = act["states"][i]["value"];
-    state[i].duration = act["states"][i]["duration"];
+    state[i].level = act["states"][i]["val"];
+    state[i].duration = act["states"][i]["dur"];
   }
 }
 
 void SpVibra::loop() {
-  if(steps = 0) {
+  if(steps == 0) {
     return;
   }
 
   if(position == 0) {
-    analogWrite(pin, state[position].level);
+    digitalWrite(pin, state[position].level == 1 ? HIGH : LOW);
     lastStep = millis();
     ++position;
   } else if(millis() - lastStep > state[position - 1].duration) {
-    analogWrite(pin, state[position].level);
+    digitalWrite(pin, state[position].level == 1 ? HIGH : LOW);
     if(++position >= steps) {
       position = 0;
       steps = 0;
